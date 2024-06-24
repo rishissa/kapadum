@@ -1,7 +1,5 @@
 # .gitignore
 
-# Ignore the db.config.js file in the config directory
-config
 
 # Ignore the node_modules directory
 /node_modules
