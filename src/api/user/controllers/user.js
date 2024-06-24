@@ -280,7 +280,7 @@ export async function login(req, res) {
 
     const findUser = await User.findOne({
       where: { email: email },
-      include: ["avatar"],
+      include: ["avatar", { model: Role, as: "role", attributes: ["name"] }],
     });
 
     if (!findUser) {
@@ -288,6 +288,7 @@ export async function login(req, res) {
         .status(400)
         .send(errorResponse({ status: 404, message: "User Not Found!" }));
     }
+
     const isPremium = await isPremiumUser({ id: findUser.dataValues.ids });
     const isMatched = await compare(password, findUser.dataValues.password);
     if (!isMatched) {
