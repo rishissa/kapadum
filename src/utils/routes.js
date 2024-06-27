@@ -53,6 +53,8 @@ import account_details from "../api/account-details/routes/account-detail.js";
 import reseller from "../api/reseller/routes/reseller.js";
 import reseller_banner from "../api/reseller_banner/routes/reseller_banner.js";
 import reseller_category from "../api/reseller_category/routes/reseller_category.js";
+import store_global from "../api/store_global/routes/store_global.js";
+import store_global_brand from "../api/store_global_brand/routes/store_global_brand.js";
 activity_log(app);
 address(app);
 admin(app);
@@ -106,6 +108,8 @@ account_details(app);
 reseller(app);
 reseller_banner(app);
 reseller_category(app);
+store_global(app);
+store_global_brand(app);
 // const fs =  from
 // const path =  from
 

@@ -1,9 +1,9 @@
 // script.js
 document.addEventListener("DOMContentLoaded", function () {
   var url = new URL(window.location.href);
-  var pid = url.searchParams.get("rid");
+  var pid = url.searchParams.get("pid");
   if (pid) {
-    var appUrl = "kapadumapp://storedetails?rid=" + rid;
+    var appUrl = "kapadumapp://productdetails?pid=" + pid;
     // var appUrl = "https://example.com";
     // var fallbackUrl = "https://yourwebsite.com/productdetails?pid=" + pid; // Change this to your actual fallback URL
 

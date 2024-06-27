@@ -23,6 +23,7 @@ import {
   fetchProductsForShare,
   wishListProducts,
   addDemoProducts,
+  updateResellerProduct,
 } from "../controllers/product.js";
 import {
   validateCreateBody,
@@ -134,6 +135,18 @@ const permissions = [
     method: "GET",
     handler: "Insert Demo Products",
   },
+  {
+    api: "products",
+    endpoint: "/api/resellers/update-product/:id",
+    method: "PUT",
+    handler: "Update Reseller Products",
+  },
+  {
+    api: "products",
+    endpoint: "/api/redirect/products/:id",
+    method: "GET",
+    handler: "Redirect to Reseller Products",
+  },
 ];
 
 export default (app) => {
@@ -161,6 +174,8 @@ export default (app) => {
   router.get("/redirect/products", redirectToApp);
   router.post("/share/products", fetchProductsForShare);
   router.get("/demo/add-products", addDemoProducts);
+  router.put("/resellers/update-product/:id", [RBAC], updateResellerProduct);
+  router.get("/redirect/products", redirectToApp);
 
   app.use("/api", router);
 };

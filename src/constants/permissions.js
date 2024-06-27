@@ -73,4 +73,9 @@ export const Admin = [
   "resellers",
 ];
 
-export const Reseller = ["reseller-banners", "resellers", "reseller-category"];
+export const Reseller = [
+  "reseller-banners",
+  "resellers",
+  "reseller-category",
+  "products",
+];

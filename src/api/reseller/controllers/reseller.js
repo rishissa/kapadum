@@ -226,7 +226,7 @@ export async function fetchResellerProducts(req, res) {
         {
           model: Variant,
           as: "imported_products",
-          through: { attributes: [] },
+          // through: { attributes: [] },
           include: [
             { model: Media, as: "thumbnail", attributes: ["url"] },
             { model: Media, as: "gallery", attributes: ["url"] },
@@ -376,5 +376,45 @@ export async function searchResellers(req, res) {
   } catch (err) {
     console.log(err);
     return res.status(400).send(err.message);
+  }
+}
+
+export async function redirectToAppReseller(req, res) {
+  try {
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Redirecting...</title>
+        <script type="text/javascript" src="/public/redirect.js" defer>
+        </script>
+            <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+            font-weight: bold;
+            font-size: 5rem;
+        }
+
+        .continue {
+            color: green;
+        }
+    </style>
+    </head>
+    <body>
+        <p>Click <span class="continue">"Continue"</span> to proceed to the reseller store in app</p>
+        <p id="error" style="color: red;"></p>
+    </body>
+    </html>
+  `;
+
+    return res.status(200).send(html, 200);
+  } catch (err) {
+    console.log(err);
+    return res.status(400).send(errorResponse({ message: err.message }));
   }
 }

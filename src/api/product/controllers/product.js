@@ -24,6 +24,7 @@ import Media from "../../upload/models/media.js";
 import Product_metric from "../../product_metrics/models/product_metrics.js";
 import Bulk_pricing from "./../../bulk_pricing/models/bulk_pricing.js";
 import { promises as fs } from "fs";
+import ImportedProduct from "../models/imported_product.js";
 
 export async function create(req, res) {
   console.log("Inside Product create");
@@ -1022,7 +1023,7 @@ export async function redirectToApp(req, res) {
     <html>
     <head>
         <title>Redirecting...</title>
-        <script type="text/javascript" src="/redirect.js" defer>
+        <script type="text/javascript" src="/public/product_redirect.js" defer>
         </script>
             <style>
         body {
@@ -1165,5 +1166,33 @@ export async function addDemoProducts(req, res) {
     return res
       .status(400)
       .send(errorResponse({ status: 400, message: err.message }));
+  }
+}
+
+export async function updateResellerProduct(req, res) {
+  try {
+    const id = req.params.id;
+    const user_id = res.user;
+    //check if product is imported by the reseller
+    const product = await ImportedProduct.findOne({
+      where: { UserId: user_id, VariantId: id },
+    });
+
+    if (!product) {
+      return res.status(400).send(
+        errorResponse({
+          status: 400,
+          message: `No Variant is imported with ID:${id}`,
+        })
+      );
+    }
+
+    const body = req.body;
+    const updatedVariant = await product.update(body);
+
+    return res.status(200).send(updatedVariant);
+  } catch (err) {
+    console.log(err.message);
+    return res.status(400).send(err.message);
   }
 }
