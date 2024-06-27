@@ -49,6 +49,8 @@ export async function create(req, res) {
       req.body,
       { transaction: transaction }
     );
+
+    console.log(product);
     let variantArray = [];
     for (const variant of variants) {
       variantArray.push({
@@ -69,11 +71,13 @@ export async function create(req, res) {
     let product_gallery_body = [];
     let variant_gallery_body = [];
     // product gellery
-    if (body.gallery.length) {
-      const obj = body.gallery.flatMap((item) => {
-        return { MediaId: item, ProductId: product.id };
-      });
-      product_gallery_body.push(...obj);
+    if (body.gallery) {
+      if (body.gallery.length) {
+        const obj = body.gallery.flatMap((item) => {
+          return { MediaId: item, ProductId: product.id };
+        });
+        product_gallery_body.push(...obj);
+      }
     }
 
     // variant gellery
