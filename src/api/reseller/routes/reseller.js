@@ -147,6 +147,7 @@ export default (app) => {
     resellerOrder
   );
   router.get("/orders", [RBAC], fetchResellerOrders);
+  router.post("/orders", [RBAC], resellerOrder);
   router.put("/:id", [RBAC, updateUser], update);
   router.get("/", [RBAC], find);
   router.get("/:id", [RBAC], findOne);
