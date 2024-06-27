@@ -13,6 +13,7 @@ import {
   fetchResellerProducts,
   searchResellers,
   redirectToAppReseller,
+  fetchResellerOrders,
 } from "../controllers/reseller.js";
 // import {
 //   addAccountDetails,
@@ -124,6 +125,12 @@ const permissions = [
     method: "GET",
     handler: "Redirect to Reseller Store",
   },
+  {
+    api: "resellers",
+    endpoint: "/api/resellers/orders",
+    method: "GET",
+    handler: "Get Reseller Orders",
+  },
   //   {
   //     api: "resellers",
   //     endpoint: "/api/resellers/fcm/register",
@@ -139,6 +146,7 @@ export default (app) => {
     [RBAC, validateResellerOrder, validate_variant],
     resellerOrder
   );
+  router.get("/orders", [RBAC], fetchResellerOrders);
   router.put("/:id", [RBAC, updateUser], update);
   router.get("/", [RBAC], find);
   router.get("/:id", [RBAC], findOne);

@@ -215,7 +215,7 @@ Story.belongsToMany(Product, { as: "products", through: "StoryProduct" });
 Product.belongsToMany(Story, { as: "stories", through: "StoryProduct" });
 Story.belongsTo(Media, { foreignKey: "ThumbialId", as: "thumbnail" });
 // ##################### store user order order variant and wallet association ###############
-User.hasOne(Order);
+User.hasMany(Order, { as: "orders" });
 Order.belongsTo(User, { foreignKey: "UserId", as: "user" });
 Order_variant.belongsTo(Variant, { foreignKey: "VariantId", as: "variant" });
 Order_status_tracker.belongsTo(Order_variant, {
