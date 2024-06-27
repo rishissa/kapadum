@@ -1,12 +1,12 @@
 # .gitignore
-/config
 
 # Ignore the node_modules directory
+/config
 /node_modules
 
 # Exclude .zip files
 *.zip
 
 # Exclude files in the public/uploads directory
-/public/uploads/*
+/public
 test.js
