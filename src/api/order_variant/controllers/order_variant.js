@@ -2,49 +2,67 @@ import { getPagination, getMeta } from "../../../services/pagination.js";
 import { tokenError, errorResponse } from "../../../services/errorResponse.js";
 import { makeOrderVariantBody } from "../services/order_variant.js";
 import { verify } from "../../../services/jwt.js";
-import { order_status as _order_status, payment_modes } from "../../../constants/order.js";
+import {
+  order_status as _order_status,
+  payment_modes,
+} from "../../../constants/order.js";
 import orderBy from "../../../services/orderBy.js";
 import { order_status } from "../../../constants/order_status.js";
 import { createActivityLog } from "../../../services/createActivityLog.js";
 import { activity_event } from "../../../constants/activity_log.js";
 import orderTracker from "../../../services/orderTracker.js";
 import excelExport from "../../../services/excelExport.js";
-import Order_variant from './../models/order_variant.js';
-import Order from './../../order/models/order.js';
+import Order_variant from "./../models/order_variant.js";
+import Order from "./../../order/models/order.js";
 import Variant from "../../variant/models/variant.js";
 import sequelize from "../../../../database/index.js";
-import Custom_courier from './../../custom_courier/models/custom_courier.js';
-import Ship_rocket_orderitem from './../../ship_rocket_orderitem/models/ship_rocket_orderitem.js';
+import Custom_courier from "./../../custom_courier/models/custom_courier.js";
+import Ship_rocket_orderitem from "./../../ship_rocket_orderitem/models/ship_rocket_orderitem.js";
 import Product from "../../product/models/product.js";
 import Return_order from "../../return_order/models/return_order.js";
 import Order_status_tracker from "../../order_status_tracker/models/order_status_tracker.js";
 import { Op } from "sequelize";
-
+import Media from "../../upload/models/media.js";
 
 export async function find(req, res) {
   try {
-
     const query = req.query;
-    const order_by = orderBy(query)
+    const order_by = orderBy(query);
     const pagination = await getPagination(query.pagination);
     const whereClause_OV = {};
     const whereClause_O = {};
     if (query.hasOwnProperty("status")) {
       if (query.status.toLowerCase() === "all") {
       } else if (!Object.values(_order_status).includes(query.status)) {
-        return res.status(400).send(errorResponse({ message: `Invalid status type select from ${Object.values(_order_status)}` }));
+        return res.status(400).send(
+          errorResponse({
+            message: `Invalid status type select from ${Object.values(
+              _order_status
+            )}`,
+          })
+        );
       } else {
         whereClause_OV.status = query.status;
       }
     }
     if (query.hasOwnProperty("payment_mode")) {
       if (!Object.values(payment_modes).includes(query.payment_mode)) {
-        return res.status(400).send(errorResponse({ message: `Invalid Payment Mode Type select from ${Object.values(payment_modes)}` }));
+        return res.status(400).send(
+          errorResponse({
+            message: `Invalid Payment Mode Type select from ${Object.values(
+              payment_modes
+            )}`,
+          })
+        );
       }
       whereClause_O.payment_mode = query.payment_mode;
     }
     if (query.hasOwnProperty("reseller_order")) {
-      query.reseller_order === "true" ? (whereClause_O.is_reseller_order = true) : query.reseller_order === "false" ? (whereClause_O.is_reseller_order = false) : "";
+      query.reseller_order === "true"
+        ? (whereClause_O.is_reseller_order = true)
+        : query.reseller_order === "false"
+        ? (whereClause_O.is_reseller_order = false)
+        : "";
     }
     const order_variants = await Order_variant.findAndCountAll({
       where: whereClause_OV,
@@ -53,7 +71,16 @@ export async function find(req, res) {
         {
           model: Variant,
           as: "variant",
-          include: ["thumbnail", "product"],
+          include: [
+            {
+              model: Product,
+              as: "product",
+              include: [
+                { model: Media, as: "thumbnail", attributes: ["url"] },
+                { model: Media, as: "gallery", attributes: ["url"] },
+              ],
+            },
+          ],
         },
         {
           model: Order,
@@ -85,7 +112,6 @@ export async function find(req, res) {
 
 export async function create(req, res) {
   try {
-
     const createdOrderVariant = await Order_variant.create(req.body);
     return res.status(201).send({
       message: "Order variant created successfully!",
@@ -93,15 +119,15 @@ export async function create(req, res) {
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send(errorResponse({ status: 500, message: "Internal server Error" }));
+    return res
+      .status(500)
+      .send(errorResponse({ status: 500, message: "Internal server Error" }));
   }
 }
 
 export async function findOne(req, res) {
   try {
-
     const id = req.params.id;
-
 
     const orderVariant = await Order_variant.findByPk(id, {
       include: [
@@ -122,31 +148,41 @@ export async function findOne(req, res) {
     });
 
     if (!orderVariant) {
-      return res.status(400).send(errorResponse({ status: 400, message: "Order is not found" }));
+      return res
+        .status(400)
+        .send(errorResponse({ status: 400, message: "Order is not found" }));
     }
 
     if (!order_status_trackers) {
-      return res.status(400).send(errorResponse({ status: 400, message: "Order status not found" }));
+      return res
+        .status(400)
+        .send(
+          errorResponse({ status: 400, message: "Order status not found" })
+        );
     }
 
-    const orderVariantResponse = await makeOrderVariantBody(orderVariant, order_status_trackers);
+    const orderVariantResponse = await makeOrderVariantBody(
+      orderVariant,
+      order_status_trackers
+    );
     console.log(orderVariantResponse);
     return res.status(200).send({
       data: orderVariantResponse,
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send(errorResponse({ status: 500, message: "Internal server Error" }));
+    return res
+      .status(500)
+      .send(errorResponse({ status: 500, message: "Internal server Error" }));
   }
 }
 
 export async function findOneUser(req, res) {
   try {
-
     const id = req.params.id;
-    const token = verify(req)
+    const token = verify(req);
     if (token.error) {
-      return res.status(401).send(tokenError(token))
+      return res.status(401).send(tokenError(token));
     }
 
     const orderVariant = await Order_variant.findByPk(id, {
@@ -166,23 +202,26 @@ export async function findOneUser(req, res) {
             {
               model: Product,
               as: "product",
-              include: ["category", "sub_category", "thumbnail", "gallery"]
+              include: ["category", "sub_category", "thumbnail", "gallery"],
             },
             "thumbnail",
-            "gallery", "bulk_pricings"]
+            "gallery",
+            "bulk_pricings",
+          ],
         },
         {
           model: Order,
           where: { UserId: token.id },
           as: "order",
-          include: ["address"]
+          include: ["address"],
         },
-
       ],
     });
 
     if (!orderVariant) {
-      return res.status(404).send(errorResponse({ status: 404, message: "order not found" }))
+      return res
+        .status(404)
+        .send(errorResponse({ status: 404, message: "order not found" }));
     }
 
     return res.status(200).send({
@@ -190,7 +229,9 @@ export async function findOneUser(req, res) {
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send(errorResponse({ status: 500, message: "Internal server Error" }));
+    return res
+      .status(500)
+      .send(errorResponse({ status: 500, message: "Internal server Error" }));
   }
 }
 
@@ -198,13 +239,18 @@ export async function update(req, res) {
   try {
     const id = req.params.id;
 
-    const [updatedRowsCount, updatedOrderVariant] = await Order_variant.update(req.body, {
-      where: { id: id },
-      returning: true,
-    });
+    const [updatedRowsCount, updatedOrderVariant] = await Order_variant.update(
+      req.body,
+      {
+        where: { id: id },
+        returning: true,
+      }
+    );
 
     if (updatedRowsCount === 0) {
-      return res.status(404).send(errorResponse({ message: "Order variant not found" }));
+      return res
+        .status(404)
+        .send(errorResponse({ message: "Order variant not found" }));
     }
 
     return res.status(200).send({
@@ -213,7 +259,9 @@ export async function update(req, res) {
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send(errorResponse({ status: 500, message: "Internal server Error" }));
+    return res
+      .status(500)
+      .send(errorResponse({ status: 500, message: "Internal server Error" }));
   }
 }
 
@@ -226,7 +274,9 @@ export const _delete = async (req, res) => {
     });
 
     if (deletedRowCount === 0) {
-      return res.status(404).send(errorResponse({ message: "Order variant not found" }));
+      return res
+        .status(404)
+        .send(errorResponse({ message: "Order variant not found" }));
     }
 
     return res.status(200).send({
@@ -234,7 +284,9 @@ export const _delete = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send(errorResponse({ status: 500, message: "Internal server Error" }));
+    return res
+      .status(500)
+      .send(errorResponse({ status: 500, message: "Internal server Error" }));
   }
 };
 
@@ -247,7 +299,9 @@ export async function findByOrderId(req, res) {
     });
 
     if (!orderVariants) {
-      return res.status(400).send(errorResponse({ status: 400, message: "Order is not found" }));
+      return res
+        .status(400)
+        .send(errorResponse({ status: 400, message: "Order is not found" }));
     }
 
     return res.status(200).send({
@@ -256,7 +310,9 @@ export async function findByOrderId(req, res) {
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send(errorResponse({ status: 500, message: "Internal server Error" }));
+    return res
+      .status(500)
+      .send(errorResponse({ status: 500, message: "Internal server Error" }));
   }
 }
 
@@ -270,7 +326,9 @@ export async function updateReturnStatus(req, res) {
     });
 
     if (!orderVariant) {
-      return res.status(404).send(errorResponse({ message: "Order variant not found" }));
+      return res
+        .status(404)
+        .send(errorResponse({ message: "Order variant not found" }));
     }
     await orderVariant.update({ status: "RETURN_REQUEST" });
 
@@ -280,7 +338,9 @@ export async function updateReturnStatus(req, res) {
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send(errorResponse({ status: 500, message: "Internal server Error" }));
+    return res
+      .status(500)
+      .send(errorResponse({ status: 500, message: "Internal server Error" }));
   }
 }
 
@@ -292,24 +352,40 @@ export async function UserOrders(req, res) {
 
     const pagination = await getPagination(query.pagination);
     const token = verify(req);
-    const whereClause_OV = {}
-    const whereClause_O = {}
+    const whereClause_OV = {};
+    const whereClause_O = {};
     if (query.hasOwnProperty("status")) {
       if (query.status.toLowerCase() === "all") {
       } else if (!Object.values(_order_status).includes(query.status)) {
-        return res.status(400).send(errorResponse({ message: `Invalid status type select from ${Object.values(_order_status)}` }));
+        return res.status(400).send(
+          errorResponse({
+            message: `Invalid status type select from ${Object.values(
+              _order_status
+            )}`,
+          })
+        );
       } else {
         whereClause_OV.status = query.status;
       }
     }
     if (query.hasOwnProperty("payment_mode")) {
       if (!Object.values(payment_modes).includes(query.payment_mode)) {
-        return res.status(400).send(errorResponse({ message: `Invalid Payment Mode Type select from ${Object.values(payment_modes)}` }));
+        return res.status(400).send(
+          errorResponse({
+            message: `Invalid Payment Mode Type select from ${Object.values(
+              payment_modes
+            )}`,
+          })
+        );
       }
       whereClause_O.payment_mode = query.payment_mode;
     }
     if (query.hasOwnProperty("reseller_order")) {
-      query.reseller_order === "true" ? (whereClause_O.is_reseller_order = true) : query.reseller_order === "false" ? (whereClause_O.is_reseller_order = false) : "";
+      query.reseller_order === "true"
+        ? (whereClause_O.is_reseller_order = true)
+        : query.reseller_order === "false"
+        ? (whereClause_O.is_reseller_order = false)
+        : "";
     }
 
     const order_variants = await Order_variant.findAll({
@@ -326,12 +402,17 @@ export async function UserOrders(req, res) {
         {
           model: Variant,
           as: "variant",
-          include: ["thumbnail", "gallery", {
-            model: Product,
-            as: "product",
-            include: ["thumbnail", "gallery", "category", "collections"]
-          }]
-        }
+          include: [
+            {
+              model: Product,
+              as: "product",
+              include: [
+                { model: Media, as: "thumbnail", attributes: ["url"] },
+                { model: Media, as: "gallery", attributes: ["url"] },
+              ],
+            },
+          ],
+        },
       ],
     });
 
@@ -355,15 +436,25 @@ export async function searchOrderVariants(req, res) {
 
     if (query.hasOwnProperty("status")) {
       if (!Object.values(_order_status).includes(query.status)) {
-        return res.status(400).send(errorResponse({ message: `Invalid status type select from ${Object.values(_order_status)}` }));
+        return res.status(400).send(
+          errorResponse({
+            message: `Invalid status type select from ${Object.values(
+              _order_status
+            )}`,
+          })
+        );
       }
       whereClause_OV.status = query.status;
     }
     if (query.hasOwnProperty("payment_mode")) {
       if (!Object.values(payment_modes).includes(query.payment_mode)) {
-        return res
-          .status(400)
-          .send(errorResponse({ message: `Invalid Payment Mode Type select from ${Object.values(payment_modes)}` }));
+        return res.status(400).send(
+          errorResponse({
+            message: `Invalid Payment Mode Type select from ${Object.values(
+              payment_modes
+            )}`,
+          })
+        );
       }
       whereClause_O.payment_mode = query.payment_mode;
     }
@@ -371,8 +462,8 @@ export async function searchOrderVariants(req, res) {
       query.reseller_order === "true"
         ? (whereClause_O.is_reseller_order = true)
         : query.reseller_order === "false"
-          ? (whereClause_O.is_reseller_order = false)
-          : "";
+        ? (whereClause_O.is_reseller_order = false)
+        : "";
     }
 
     const orders = await Order_variant.findAndCountAll({
@@ -404,14 +495,15 @@ export async function searchOrderVariants(req, res) {
 
 export async function UserOrderStats(req, res) {
   try {
-
-    const token = verify(req)
+    const token = verify(req);
     if (token.error) {
-      return res.status(401).send(tokenError(token))
+      return res.status(401).send(tokenError(token));
     }
 
     const allStatuses = Object.values(_order_status);
-    const initialStatusCounts = Object.fromEntries(allStatuses.map((status) => [status, 0]));
+    const initialStatusCounts = Object.fromEntries(
+      allStatuses.map((status) => [status, 0])
+    );
     const counts = await Order_variant.findAll({
       attributes: [
         "status",
@@ -424,10 +516,7 @@ export async function UserOrderStats(req, res) {
           as: "order",
           attributes: [],
           where: {
-            [Op.and]: [
-              { UserId: token.id },
-              { is_paid: true }
-            ]
+            [Op.and]: [{ UserId: token.id }, { is_paid: true }],
           },
         },
       ],
@@ -444,36 +533,41 @@ export async function UserOrderStats(req, res) {
           as: "order",
           attributes: [],
           where: {
-            [Op.and]: [
-              { UserId: token.id },
-              { is_paid: true }
-            ]
+            [Op.and]: [{ UserId: token.id }, { is_paid: true }],
           },
         },
       ],
-    })
+    });
 
     counts.forEach((count) => {
       const status = count.dataValues.status;
       finalStats.status[status] = +count.dataValues.statusCount || 0;
     });
 
-    return res.status(200).send({ data: { ...finalStats.status, ALL: orderVariants } });
+    return res
+      .status(200)
+      .send({ data: { ...finalStats.status, ALL: orderVariants } });
   } catch (error) {
-    console.log(error)
-    return res.status(500).send(errorResponse({ status: 500, message: error.message }))
+    console.log(error);
+    return res
+      .status(500)
+      .send(errorResponse({ status: 500, message: error.message }));
   }
 }
 
 export async function stats(req, res) {
   try {
-
     const allStatuses = Object.values(_order_status);
 
-    const initialStatusCounts = Object.fromEntries(allStatuses.map((status) => [status, 0]));
+    const initialStatusCounts = Object.fromEntries(
+      allStatuses.map((status) => [status, 0])
+    );
 
     const counts = await Order_variant.findAll({
-      attributes: ["status", [sequelize.fn("COUNT", sequelize.col("status")), "statusCount"]],
+      attributes: [
+        "status",
+        [sequelize.fn("COUNT", sequelize.col("status")), "statusCount"],
+      ],
       group: ["status"],
     });
 
@@ -488,7 +582,9 @@ export async function stats(req, res) {
       finalStats.status[status] = +count.dataValues.statusCount || 0;
     });
 
-    return res.status(200).send({ data: { ...finalStats.status, ALL: orderVariants } });
+    return res
+      .status(200)
+      .send({ data: { ...finalStats.status, ALL: orderVariants } });
   } catch (error) {
     console.log(error);
     return res.status(500).send({
@@ -502,7 +598,6 @@ export async function stats(req, res) {
 export async function acceptOrder(req, res) {
   const t = await sequelize.transaction();
   try {
-
     const token = verify(req);
     const { id } = req.params;
 
@@ -517,13 +612,15 @@ export async function acceptOrder(req, res) {
       );
     }
 
-    await orderVariant.update({
-      status: order_status.ACCEPTED,
-    },
+    await orderVariant.update(
+      {
+        status: order_status.ACCEPTED,
+      },
       {
         where: { id: id },
         transaction: t,
-      });
+      }
+    );
 
     await createActivityLog({
       event: activity_event.ORDER_ACCEPTED,
@@ -538,7 +635,9 @@ export async function acceptOrder(req, res) {
       transaction: t,
     });
     await t.commit();
-    return res.status(200).send({ message: "Order Variant has been accepted!" });
+    return res
+      .status(200)
+      .send({ message: "Order Variant has been accepted!" });
   } catch (error) {
     await t.rollback();
     console.log(error);
@@ -549,7 +648,6 @@ export async function acceptOrder(req, res) {
 export async function declineOrder(req, res) {
   const t = await sequelize.transaction();
   try {
-
     const token = verify(req);
     const { id } = req.params;
 
@@ -587,7 +685,9 @@ export async function declineOrder(req, res) {
     });
     await t.commit();
 
-    return res.status(200).send({ message: "Order Variant has been declined!" });
+    return res
+      .status(200)
+      .send({ message: "Order Variant has been declined!" });
   } catch (error) {
     await t.rollback();
     console.log(error);
@@ -598,7 +698,6 @@ export async function declineOrder(req, res) {
 export async function cancelOrder(req, res) {
   const t = await sequelize.transaction();
   try {
-
     const token = verify(req);
     const { id } = req.params;
 
@@ -623,7 +722,9 @@ export async function cancelOrder(req, res) {
       transaction: t,
     });
     await t.commit();
-    return res.status(200).send({ message: "Order Variant has been cancelled!" });
+    return res
+      .status(200)
+      .send({ message: "Order Variant has been cancelled!" });
   } catch (error) {
     await t.rollback();
     console.log(error);
@@ -634,14 +735,14 @@ export async function cancelOrder(req, res) {
 export async function deliverOrder(req, res) {
   const t = await sequelize.transaction();
   try {
-
     const token = verify(req);
     const { id } = req.params;
 
     const orderVariant = await Order_variant.findByPk(id, {
       include: ["order"],
     });
-    if (!orderVariant
+    if (
+      !orderVariant
       // || orderVariant.status !== order_status.INTRANSIT
     ) {
       return res.status(400).send(
@@ -678,11 +779,24 @@ export async function deliverOrder(req, res) {
     //     { transaction: t }
     //   );
     // }
-    await createActivityLog({ event: activity_event.ORDER_DELIVERED, sequelize, UserId: token.id, transaction: t });
-    await orderTracker({ sequelize, order_variant_ids: [id], status: order_status.DELIVERED, transaction: t });
+    await createActivityLog({
+      event: activity_event.ORDER_DELIVERED,
+      sequelize,
+      UserId: token.id,
+      transaction: t,
+    });
+    await orderTracker({
+      sequelize,
+      order_variant_ids: [id],
+      status: order_status.DELIVERED,
+      transaction: t,
+    });
     await t.commit();
 
-    return res.status(200).send({ message: "Order Variant has been delivered!", data: orderVariant });
+    return res.status(200).send({
+      message: "Order Variant has been delivered!",
+      data: orderVariant,
+    });
   } catch (error) {
     await t.rollback();
     console.log(error);
@@ -699,10 +813,11 @@ export async function declineReturn(req, res) {
     const orderVariant = await Order_variant.findByPk(id);
 
     if (!orderVariant || orderVariant.status !== order_status.RETURN_REQUEST) {
-      return res.status(400).send(errorResponse({
-        message: "Return request not eligible for decline",
-        details: "Order is not in RETURN_REQUEST status",
-      })
+      return res.status(400).send(
+        errorResponse({
+          message: "Return request not eligible for decline",
+          details: "Order is not in RETURN_REQUEST status",
+        })
       );
     }
 
@@ -722,7 +837,9 @@ export async function declineReturn(req, res) {
     });
     await t.commit();
 
-    return res.status(200).send({ message: "Return request has been declined" });
+    return res
+      .status(200)
+      .send({ message: "Return request has been declined" });
   } catch (error) {
     await t.rollback();
     console.log(error);
@@ -736,12 +853,19 @@ export async function returnRequest(req, res) {
     const token = verify(req);
     const { id } = req.params;
 
-    if (token.error) return res.status(401).send(tokenError(token))
+    if (token.error) return res.status(401).send(tokenError(token));
 
-    const orderVariant = await Order_variant.findByPk(id, { include: [{ model: Variant, as: "variant", include: ["product"] }] });
+    const orderVariant = await Order_variant.findByPk(id, {
+      include: [{ model: Variant, as: "variant", include: ["product"] }],
+    });
 
     if (!orderVariant.variant.product.product_return) {
-      return res.status(400).send(errorResponse({ message: "You can not return this product", details: "product return is not available for this product" }))
+      return res.status(400).send(
+        errorResponse({
+          message: "You can not return this product",
+          details: "product return is not available for this product",
+        })
+      );
     }
 
     if (!orderVariant || orderVariant.status !== order_status.DELIVERED) {
@@ -753,17 +877,22 @@ export async function returnRequest(req, res) {
       );
     }
 
-    await orderVariant.update({ status: order_status.RETURN_REQUEST },
+    await orderVariant.update(
+      { status: order_status.RETURN_REQUEST },
       {
         where: { id: id },
         transaction: t,
-      });
+      }
+    );
 
-
-    const returnOrder = await Return_order.create({
-      ...req.body, UserId: token.id,
-      OrderVariantId: id
-    }, { transaction: t })
+    const returnOrder = await Return_order.create(
+      {
+        ...req.body,
+        UserId: token.id,
+        OrderVariantId: id,
+      },
+      { transaction: t }
+    );
 
     await orderTracker({
       order_variant_ids: [id],
@@ -782,16 +911,20 @@ export async function returnRequest(req, res) {
 export async function listReturnRequests(req, res) {
   try {
     const token = verify(req);
-    if (token.error) return res.status(401).send(tokenError(token))
+    if (token.error) return res.status(401).send(tokenError(token));
     const orderVariant = await Order_variant.findAll({
       where: { status: order_status.RETURN_REQUEST },
       include: [
         { model: Order, as: "order", where: { UserId: token.id } },
         {
-          model: Variant, as: "variant",
-          include: ['thumbnail', { model: Product, as: "product", include: ["thumbnail"] }]
-        }
-      ]
+          model: Variant,
+          as: "variant",
+          include: [
+            "thumbnail",
+            { model: Product, as: "product", include: ["thumbnail"] },
+          ],
+        },
+      ],
     });
     return res.status(200).send({ data: orderVariant });
   } catch (error) {
@@ -802,41 +935,52 @@ export async function listReturnRequests(req, res) {
 
 export async function trackOrder(req, res) {
   try {
-
     const { id } = req.params;
-    const orderStatuses = await Order_status_tracker.findAll({ where: { OrderVariantId: id } })
-    return res.status(200).send({ data: orderStatuses })
+    const orderStatuses = await Order_status_tracker.findAll({
+      where: { OrderVariantId: id },
+    });
+    return res.status(200).send({ data: orderStatuses });
   } catch (error) {
-    console.log(error)
-    return res.status(500).send(errorResponse({ message: error.message, status: 500 }))
+    console.log(error);
+    return res
+      .status(500)
+      .send(errorResponse({ message: error.message, status: 500 }));
   }
 }
 
 export async function exportToExcel(req, res) {
   try {
-
     const query = req.query;
     const body = req.body;
     const whereClause = {};
     if (body.items.length && Array.isArray(body.items)) {
-      whereClause.id = { [Op.in]: body.items }
+      whereClause.id = { [Op.in]: body.items };
     }
     const order = orderBy(query);
     const order_variants = await Order_variant.findAll({
       where: whereClause,
       order: order,
-      include: [{ model: Variant, as: "variant", }],
-      raw: true
+      include: [{ model: Variant, as: "variant" }],
+      raw: true,
     });
     if (!order_variants.length) {
-      return res.status(400).send({ message: `No data found for last ${query.days}` })
+      return res
+        .status(400)
+        .send({ message: `No data found for last ${query.days}` });
     }
 
-    const excelFile = await excelExport(order_variants)
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    res.setHeader('Content-Disposition', 'attachment; filename="output.xlsx"')
+    const excelFile = await excelExport(order_variants);
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader("Content-Disposition", 'attachment; filename="output.xlsx"');
     return res.status(200).send(excelFile);
   } catch (error) {
-    return res.status(500).send(errorResponse({ status: 500, message: error.message, details: error }))
+    return res
+      .status(500)
+      .send(
+        errorResponse({ status: 500, message: error.message, details: error })
+      );
   }
 }

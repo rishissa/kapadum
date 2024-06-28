@@ -158,7 +158,7 @@ export async function find(req, res) {
     });
 
     const meta = await getMeta(pagination, orders.count);
-
+    
     return res.status(200).send({
       data: orders.rows,
       meta,
