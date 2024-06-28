@@ -50,6 +50,8 @@ import Variant from "../../variant/models/variant.js";
 import Wallet from "../../wallet/models/wallet.js";
 import { createInvoice } from "../services/invoiceGenerator.js";
 import Address from "../../address/models/address.js";
+import Product from "../../product/models/product.js";
+import Media from "../../upload/models/media.js";
 const RZ_RCT = uid(10).toUpperCase();
 export async function create(req, res) {
   try {
@@ -137,7 +139,16 @@ export async function find(req, res) {
             {
               model: Variant,
               as: "variant",
-              include: ["thumbnail"],
+              include: [
+                {
+                  model: Product,
+                  as: "product",
+                  include: [
+                    { model: Media, as: "thumbnail", attributes: ["url"] },
+                    { model: Media, as: "gallery", attributes: ["url"] },
+                  ],
+                },
+              ],
             },
           ],
         },
@@ -1287,5 +1298,3 @@ export async function generateInvoice(req, res) {
       .send(errorResponse({ status: 500, message: error.message }));
   }
 }
-
-

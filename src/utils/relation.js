@@ -324,6 +324,7 @@ Variant.belongsToMany(User, {
 });
 StoreGlobal.belongsTo(User, { as: "user", foreignKey: "UserId" });
 StoreGlobal_brand.belongsTo(User, { as: "user", foreignKey: "UserId" });
+Order.belongsTo(User, { as: "reseller", foreignKey: "ResellerId" });
 // await sequelize.sync({ alter: true });
 // };
 // initialize()

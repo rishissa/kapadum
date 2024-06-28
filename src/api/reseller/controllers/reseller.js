@@ -19,6 +19,7 @@ import shippingPriceChecker from "../../order/services/shippingPriceChecker.js";
 import { createOrderVaraint } from "../../order/services/createOV.js";
 import Order_variant from "../../order_variant/models/order_variant.js";
 import Order from "../../order/models/order.js";
+import Product from "../../product/models/product.js";
 
 export async function create(req, res) {
   const t = await sequelize.transaction();
@@ -428,9 +429,11 @@ export async function redirectToAppReseller(req, res) {
 export async function fetchResellerOrders(req, res) {
   try {
     const id = res.user;
-    const user = await User.findOne({
-      where: { id: id },
-      attributes: ["id", "email"],
+    const query = req.query;
+    const pagination = await getPagination(query.pagination);
+
+    const orders = await Order.findAndCountAll({
+      where: { UserId: id },
       include: [
         {
           model: Order,
@@ -439,7 +442,7 @@ export async function fetchResellerOrders(req, res) {
       ],
     });
 
-    return res.status(200).send(user);
+    return res.status(200).send(user.orders);
   } catch (err) {
     console.log(err.message);
     return res.status(400).send(err.message);

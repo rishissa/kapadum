@@ -78,4 +78,5 @@ export const Reseller = [
   "resellers",
   "reseller-category",
   "products",
+  "orders",
 ];
