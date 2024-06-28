@@ -230,8 +230,12 @@ export async function fetchResellerProducts(req, res) {
           as: "imported_products",
           // through: { attributes: [] },
           include: [
-            { model: Media, as: "thumbnail", attributes: ["url"] },
-            { model: Media, as: "gallery", attributes: ["url"] },
+            {
+              model: Product,
+              as: "product",
+              attributes: ["id"],
+              include: [{ model: Media, as: "thumbnail", attributes: ["url"] }],
+            },
           ],
         },
       ],
@@ -436,6 +440,14 @@ export async function fetchResellerOrders(req, res) {
     });
 
     return res.status(200).send(user);
+  } catch (err) {
+    console.log(err.message);
+    return res.status(400).send(err.message);
+  }
+}
+
+export async function fetchCustomerResellerOrders(req, res) {
+  try {
   } catch (err) {
     console.log(err.message);
     return res.status(400).send(err.message);
