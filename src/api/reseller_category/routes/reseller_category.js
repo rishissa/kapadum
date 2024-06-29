@@ -65,7 +65,7 @@ const permissions = [
 ];
 
 export default (app) => {
-  router.post("/", [RBAC, validateCreateRequest], create);
+  router.post("/", [RBAC], create);
   router.get("/", find);
   router.get("/:id", findOne);
   router.put("/:id", [RBAC, validateUpdateRequest], update);

@@ -4,6 +4,7 @@ import ResellerBanner from "../models/reseller_banner.js";
 
 export async function create(req, res) {
   try {
+    req.body["UserId"] = res.user;
     const banner = await ResellerBanner.create(req.body);
     return res
       .status(200)

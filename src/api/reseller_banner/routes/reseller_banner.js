@@ -40,7 +40,7 @@ const permissions = [
   },
 ];
 export default (app) => {
-  router.post("/add", [RBAC, validateRequest], create);
+  router.post("/add", [RBAC], create);
   router.get("/:id", findOne);
   router.put("/:id", update);
   router.delete("/:id", destroy);
