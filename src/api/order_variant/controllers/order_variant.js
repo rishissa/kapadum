@@ -984,3 +984,44 @@ export async function exportToExcel(req, res) {
       );
   }
 }
+
+export async function resellerOrderStats(req, res) {
+  try {
+    const allStatuses = Object.values(_order_status);
+
+    const initialStatusCounts = Object.fromEntries(
+      allStatuses.map((status) => [status, 0])
+    );
+
+    const counts = await Order_variant.findAll({
+      attributes: [
+        "status",
+        [sequelize.fn("COUNT", sequelize.col("status")), "statusCount"],
+      ],
+      group: ["status"],
+      include: [{ model: Order, where: { ResellerId: res.user } }],
+    });
+
+    const orderVariants = await Order_variant.count();
+
+    const finalStats = {
+      status: { ...initialStatusCounts },
+    };
+
+    counts.forEach((count) => {
+      const status = count.dataValues.status;
+      finalStats.status[status] = +count.dataValues.statusCount || 0;
+    });
+
+    return res
+      .status(200)
+      .send({ data: { ...finalStats.status, ALL: orderVariants } });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      status: 500,
+      message: "Internal server Error",
+      details: error.message,
+    });
+  }
+}

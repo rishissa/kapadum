@@ -58,6 +58,7 @@ import ResellerBanner from "../api/reseller_banner/models/reseller_banner.js";
 import ResellerCategory from "../api/reseller_category/models/reseller_category.js";
 import StoreGlobal from "../api/store_global/models/store_global.js";
 import StoreGlobal_brand from "../api/store_global_brand/models/store_global_brand.js";
+import ResellerCollection from "../api/reseller_collection/models/reseller_collection.js";
 // async function initialize() {
 console.log("Initalizing Database");
 // #################### Product , Variant , Tag , Bulk Pricing and Collection and Collection_static Association #################
@@ -325,6 +326,11 @@ Variant.belongsToMany(User, {
 StoreGlobal.belongsTo(User, { as: "user", foreignKey: "UserId" });
 StoreGlobal_brand.belongsTo(User, { as: "user", foreignKey: "UserId" });
 Order.belongsTo(User, { as: "reseller", foreignKey: "ResellerId" });
+ResellerCollection.belongsTo(Media, {
+  as: "thumbnail",
+  foreignKey: "ThumbnailId",
+});
+ResellerCollection
 await sequelize.sync({ alter: true });
 // };
 // initialize()
