@@ -61,7 +61,6 @@ export async function find(req, res) {
     //   server_subscriptions && server_subscriptions.length
     //     ? server_subscriptions[0]
     //     : false;
-
     return res.status(200).send({
       data: global,
     });

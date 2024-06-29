@@ -20,6 +20,7 @@ import { createOrderVaraint } from "../../order/services/createOV.js";
 import Order_variant from "../../order_variant/models/order_variant.js";
 import Order from "../../order/models/order.js";
 import Product from "../../product/models/product.js";
+import StoreGlobal from "../../store_global/models/store_global.js";
 
 export async function create(req, res) {
   const t = await sequelize.transaction();
@@ -70,6 +71,8 @@ export async function create(req, res) {
 
     //create record in reseller info
     const reseller_info = await ResellerInfo.create({ UserId: user.id });
+
+    const store_global = await StoreGlobal.create({ UserId: user.id });
     // const htmlContent = readFileSync("./views/accountCreated.ejs", "utf8");
     // const renderedContent = render(htmlContent, { name, task: "Created" });
     await t.commit();

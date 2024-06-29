@@ -397,7 +397,7 @@ export async function UserOrders(req, res) {
           model: Order,
           as: "order",
           attributes: ["id"],
-          where: { UserId: token.id, ...whereClause_O, is_paid: true },
+          where: { UserId: token.id, ...whereClause_O },
         },
         {
           model: Variant,
