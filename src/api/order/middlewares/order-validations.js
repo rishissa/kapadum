@@ -178,3 +178,8 @@ export async function validateResellerOrder(req, res, next) {
     return res.status(500).send(err.message);
   }
 }
+
+
+export async function validateCustomerResellerOrder(req, res, next) {
+  
+}

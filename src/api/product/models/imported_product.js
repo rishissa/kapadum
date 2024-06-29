@@ -5,6 +5,7 @@ import Variant from "../../variant/models/variant.js";
 
 const ImportedProduct = sequelize.define("ImportedProduct", {
   reselling_price: DataTypes.FLOAT,
+  quantity: DataTypes.INTEGER,
   UserId: {
     type: DataTypes.INTEGER,
     references: {

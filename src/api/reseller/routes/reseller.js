@@ -14,6 +14,7 @@ import {
   searchResellers,
   redirectToAppReseller,
   fetchResellerOrders,
+  fetchResellerCustomerOrders,
 } from "../controllers/reseller.js";
 // import {
 //   addAccountDetails,
@@ -131,6 +132,12 @@ const permissions = [
     method: "GET",
     handler: "Get Reseller Orders",
   },
+  {
+    api: "resellers",
+    endpoint: "/api/resellers/customer-orders",
+    method: "GET",
+    handler: "Get Reseller Customer Orders",
+  },
   //   {
   //     api: "resellers",
   //     endpoint: "/api/resellers/fcm/register",
@@ -157,6 +164,7 @@ export default (app) => {
   router.get("/:id/products", fetchResellerProducts);
   router.get("/search/:key", [RBAC], searchResellers);
   router.get("/redirect", redirectToAppReseller);
+  router.get("/customer-orders", fetchResellerCustomerOrders);
 
   //   router.post("/login", [validatelogin], login);
   app.use("/api/resellers", router);

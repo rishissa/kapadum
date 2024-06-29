@@ -332,6 +332,7 @@ export async function resellerOrder(req, res) {
         reselling_price: v.sellingPrice,
         UserId: res.user,
         VariantId: v.VariantId,
+        quantity: v.quantity,
       };
     });
     //add imported products
@@ -452,10 +453,82 @@ export async function fetchResellerOrders(req, res) {
   }
 }
 
-export async function fetchCustomerResellerOrders(req, res) {
+export async function fetchResellerCustomerOrders(req, res) {
   try {
-  } catch (err) {
-    console.log(err.message);
-    return res.status(400).send(err.message);
+    console.log("entering search");
+
+    const query = req.query;
+
+    const pagination = await getPagination(query.pagination);
+    const token = verify(req);
+    const whereClause_OV = {};
+    const whereClause_O = {};
+    if (query.hasOwnProperty("status")) {
+      if (query.status.toLowerCase() === "all") {
+      } else if (!Object.values(_order_status).includes(query.status)) {
+        return res.status(400).send(
+          errorResponse({
+            message: `Invalid status type select from ${Object.values(
+              _order_status
+            )}`,
+          })
+        );
+      } else {
+        whereClause_OV.status = query.status;
+      }
+    }
+    // if (query.hasOwnProperty("payment_mode")) {
+    //   if (!Object.values(payment_modes).includes(query.payment_mode)) {
+    //     return res.status(400).send(
+    //       errorResponse({
+    //         message: `Invalid Payment Mode Type select from ${Object.values(
+    //           payment_modes
+    //         )}`,
+    //       })
+    //     );
+    //   }
+    //   whereClause_O.payment_mode = query.payment_mode;
+    // }
+    // if (query.hasOwnProperty("reseller_order")) {
+    //   query.reseller_order === "true"
+    //     ? (whereClause_O.is_reseller_order = true)
+    //     : query.reseller_order === "false"
+    //     ? (whereClause_O.is_reseller_order = false)
+    //     : "";
+    // }
+
+    const order_variants = await Order_variant.findAll({
+      offset: pagination.offset,
+      limit: pagination.limit,
+      where: whereClause_OV,
+      include: [
+        {
+          model: Order,
+          as: "order",
+          attributes: ["id"],
+          where: { ResellerId: token.id, ...whereClause_O },
+        },
+        {
+          model: Variant,
+          as: "variant",
+          include: [
+            {
+              model: Product,
+              as: "product",
+              include: [
+                { model: Media, as: "thumbnail", attributes: ["url"] },
+                { model: Media, as: "gallery", attributes: ["url"] },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    const meta = await getMeta(pagination, order_variants.length);
+    return res.status(200).send({ data: order_variants, meta });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ error: "Failed to fetch orders" });
   }
 }

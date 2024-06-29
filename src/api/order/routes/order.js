@@ -15,13 +15,17 @@ import {
   checkOutWallet,
   resellerPayout,
   generateInvoice,
+  placeCustomerOrderToReseller,
 } from "../controllers/order.js";
 import RBAC from "../../../middlewares/RBAC.js";
 import {
   validateOrderBody,
   checkUserSubscription,
 } from "../middlewares/order-validations.js";
-import { validate_variant } from "../middlewares/order.js";
+import {
+  validateCustomerResellerOrder,
+  validate_variant,
+} from "../middlewares/order.js";
 
 const permissions = [
   {
@@ -104,6 +108,12 @@ const permissions = [
     method: "POST",
     handler: "Export ORders",
   },
+  {
+    api: "orders",
+    endpoint: "/api/orders/customers",
+    method: "POST",
+    handler: "Place Customer Orders To Reseller",
+  },
 ];
 
 export default (app) => {
@@ -113,6 +123,11 @@ export default (app) => {
   router.get("/", [], find);
   router.post("/", [RBAC], create);
   router.get("/search", searchOrders);
+  router.post(
+    "/customers",
+    [RBAC, validateOrderBody, validateCustomerResellerOrder],
+    placeCustomerOrderToReseller
+  );
   router.get("/:id", [RBAC], findOne);
   router.put("/:id", [RBAC], update);
   router.get("/:id/invoice", [], generateInvoice);

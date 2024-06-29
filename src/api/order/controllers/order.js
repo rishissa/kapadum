@@ -52,7 +52,9 @@ import { createInvoice } from "../services/invoiceGenerator.js";
 import Address from "../../address/models/address.js";
 import Product from "../../product/models/product.js";
 import Media from "../../upload/models/media.js";
+import ImportedProduct from "../../product/models/imported_product.js";
 const RZ_RCT = uid(10).toUpperCase();
+
 export async function create(req, res) {
   try {
     const newOrder = await Order.create(req.body);
@@ -158,7 +160,7 @@ export async function find(req, res) {
     });
 
     const meta = await getMeta(pagination, orders.count);
-    
+
     return res.status(200).send({
       data: orders.rows,
       meta,
@@ -1296,5 +1298,64 @@ export async function generateInvoice(req, res) {
     return res
       .status(500)
       .send(errorResponse({ status: 500, message: error.message }));
+  }
+}
+
+export async function placeCustomerOrderToReseller(req, res) {
+  try {
+    const body = req.body;
+    const variants = body.variants;
+    const user = req.user;
+    const variants_details = req.variants_arr;
+    const t = await sequelize.transaction();
+    let { totalAmount, variantsPrice } = await checkBulkPricing({
+      user,
+      variants,
+      variants_details,
+    });
+    const shippingPrice = await shippingPriceChecker({
+      global,
+      variantsArray: variants_details,
+      variantsPrice,
+    });
+    totalAmount += shippingPrice;
+
+    //check if wallet has totalAmount
+    if (totalAmount > res.user_data.wallet_balance) {
+      return res.status(400).send({
+        message: `Wallet Doesn't have enough balance: Available Balance: ${res.user_data.wallet_balance}`,
+      });
+    }
+    body.consumer.isResellerOrder = false;
+    const order_id = await createOrderVaraint({
+      body,
+      // razorpayOrder: rzOrder,
+      // sequelize,
+      transaction: t,
+      user,
+      // variants_details,
+      variantsPrice,
+      totalAmount,
+    });
+
+    //upadte quantity in imported products of reseller
+    for (const it of variants) {
+      await ImportedProduct.update({ quantity: it.quantity });
+    }
+    //deduct wallet amount
+    const updateWallet = await User.update(
+      { wallet_balance: res.user_data.wallet_balance - totalAmount },
+      {
+        where: { id: res.user },
+      },
+      { transaction: t }
+    );
+    await t.commit();
+    return res.status(200).send({ data: { totalAmount, variantsPrice } });
+  } catch (err) {
+    console.log(err.message);
+    return res
+      .status(400)
+      .send(errorResponse({ status: 400, message: err.message }));
   }
 }
