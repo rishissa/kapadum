@@ -1,31 +1,16 @@
 import { Router } from "express";
-const router = Router();
+const router = Router()
 import RBAC from "../../../middlewares/RBAC.js";
 import {
-  create,
-  exportToExcel,
-  stats,
-  listReturnRequests,
-  trackOrder,
+  create, exportToExcel, stats, listReturnRequests, trackOrder,
   // UserOrders,
   // UserOrderStats,
   find,
   //  findOneUser,
-  findOne,
-  update,
-  _delete,
-  findByOrderId,
-  acceptOrder,
-  declineOrder,
-  cancelOrder,
-  deliverOrder,
-  returnRequest,
-  declineReturn,
-  updateReturnStatus,
+  findOne, update, _delete, findByOrderId, acceptOrder, declineOrder, cancelOrder, deliverOrder, returnRequest, declineReturn, updateReturnStatus,
   findOneUser,
   UserOrders,
-  UserOrderStats,
-  resellerOrderStats,
+  UserOrderStats
 } from "../controllers/order_variant.js";
 
 const permissions = [
@@ -149,19 +134,12 @@ const permissions = [
     method: "POST",
     handler: "Export Order Variants To Excel",
   },
-  {
-    api: "order-variants",
-    endpoint: "/api/order-variants/reseller-order-stats",
-    method: "GET",
-    handler: "GET Reseller Order Stats",
-  },
 ];
 
 export default (app) => {
   router.post("/", [RBAC], create);
   router.post("/export", exportToExcel);
   router.get("/stats", stats);
-  router.get("/reseller-order-stats", [RBAC], resellerOrderStats);
   router.get("/return-requests", listReturnRequests);
   router.get("/:id/track", trackOrder);
   router.get("/users", UserOrders);
@@ -178,11 +156,7 @@ export default (app) => {
   router.put("/:id/deliver", deliverOrder);
   router.put("/:id/return-request", returnRequest);
   router.put("/:id/return-decline", declineReturn);
-  router.put(
-    "/:orderId/variants/:variantId/return_request",
-    [RBAC],
-    updateReturnStatus
-  );
+  router.put("/:orderId/variants/:variantId/return_request", [RBAC], updateReturnStatus);
   app.use("/api/order-variants", router);
 };
 

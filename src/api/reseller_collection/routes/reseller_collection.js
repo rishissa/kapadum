@@ -1,67 +1,76 @@
 import { Router } from "express";
 const router = Router();
-import { create, update, find, findOne, _delete, getProductsByCollection, searchProductsInCollection } from "../controllers/reseller_collection.js";
-import { validateCreateCollection, validateUpdateCollection } from "../middlewares/reseller_collection.js";
+import {
+  create,
+  update,
+  find,
+  findOne,
+  _delete,
+  getProductsByCollection,
+  searchProductsInCollection,
+} from "../controllers/reseller_collection.js";
+import {
+  validateCreateCollection,
+  validateUpdateCollection,
+} from "../middlewares/reseller_collection.js";
 import RABC from "../../../middlewares/RBAC.js";
 import { search } from "../../../middlewares/queryValidator.js";
 
-
 const permissions = [
   {
-    api: "collection",
-    endpoint: "/api/collections",
+    api: "reseller-collection",
+    endpoint: "/api/reseller-collections",
     method: "POST",
-    handler: "Create collection",
+    handler: "Create Reseller collection",
   },
   {
-    api: "collection",
-    endpoint: "/api/collections",
+    api: "reseller-collection",
+    endpoint: "/api/reseller-collections",
     method: "GET",
-    handler: "List collections",
+    handler: "List reseller-collections",
   },
   {
-    api: "collection",
-    endpoint: "/api/collections/:id",
+    api: "reseller-collection",
+    endpoint: "/api/reseller-collections/:id",
     method: "GET",
-    handler: "List Single collection",
+    handler: "List Single reseller-collection",
   },
   {
-    api: "collection",
-    endpoint: "/api/collections/:id",
+    api: "reseller-collection",
+    endpoint: "/api/reseller-collections/:id",
     method: "PUT",
-    handler: "Update collection",
+    handler: "Update reseller-collection",
   },
   {
-    api: "collection",
-    endpoint: "/api/collections/:id",
+    api: "reseller-collection",
+    endpoint: "/api/reseller-collections/:id",
     method: "DELETE",
-    handler: "Delete collection",
+    handler: "Delete reseller-collection",
   },
   {
-    api: "collection",
-    endpoint: "/api/collections/:id/products",
+    api: "reseller-collection",
+    endpoint: "/api/reseller-collections/:id/products",
     method: "GET",
-    handler: "List collection's products",
+    handler: "List reseller-collection's products",
   },
   {
-    api: "collection",
-    endpoint: "/api/collections/:id/products/search",
+    api: "reseller-collection",
+    endpoint: "/api/reseller-collections/:id/products/search",
     method: "GET",
-    handler: "Search collection's products",
+    handler: "Search reseller-collection's products",
   },
 ];
-
 
 router.post("/", [RABC, validateCreateCollection], create);
 router.put("/:id", [RABC, validateUpdateCollection], update);
 router.get("/", find);
 router.get("/:id", findOne);
-router.delete("/:id", [RABC,], _delete);
+router.delete("/:id", [RABC], _delete);
 router.get("/:id/products", getProductsByCollection);
 router.get("/:id/products/search", [search], searchProductsInCollection);
 
 export default (app) => {
-  app.use("/api/collections", router);
+  app.use("/api/reseller-collections", router);
 };
 
 const _permissions = permissions;

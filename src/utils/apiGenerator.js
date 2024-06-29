@@ -4,7 +4,8 @@ import fs from "fs";
 
 export default async () => {
   let permissionArray = await apiGenerator();
-  // fs.writeFileSync("permissions.json", JSON.stringify(permissionArray))
+  // console.log(permissionArray);
+  // fs.writeFileSync("permissions.json", JSON.stringify(permissionArray));
   const permission = await Permission.bulkCreate(permissionArray, {
     updateOnDuplicate: ["api", "method", "endpoint", "handler"],
   });

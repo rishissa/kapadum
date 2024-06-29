@@ -7,13 +7,12 @@ import { activity_event } from "../../../constants/activity_log.js";
 import priceFilter from "../../product/services/priceFilter.js";
 import Collection from "../models/reseller_collection.js";
 import sequelize from "../../../../database/index.js";
-import Product from '../../product/models/product.js';
+import Product from "../../product/models/product.js";
 import Variant from "../../variant/models/variant.js";
 const CollectionProduct = sequelize.models.CollectionProduct;
 export async function create(req, res) {
   const t = await sequelize.transaction();
   try {
-
     const token = verify(req);
     const body = req.body;
     const collection = await Collection.create(req.body, { transaction: t });
@@ -24,22 +23,39 @@ export async function create(req, res) {
         CollectionId: collection.id,
         ProductId: productId,
       }));
-      const createProdCollection = await CollectionProduct.bulkCreate(collectionProduct, { transaction: t });
+      const createProdCollection = await CollectionProduct.bulkCreate(
+        collectionProduct,
+        { transaction: t }
+      );
     }
 
-    await createActivityLog({ event: activity_event.NEW_COLLECTION_ADDED, sequelize, UserId: token.id, transaction: t });
+    await createActivityLog({
+      event: activity_event.NEW_COLLECTION_ADDED,
+      sequelize,
+      UserId: token.id,
+      transaction: t,
+    });
     await t.commit();
-    return res.status(200).send({ message: "Collection Created Successfully!", data: collection });
+    return res
+      .status(200)
+      .send({ message: "Collection Created Successfully!", data: collection });
   } catch (error) {
     await t.rollback();
     console.log(error);
-    return res.status(500).send(errorResponse({ status: 500, message: "failed to perform action", details: "Some internal server error occured!" }));
+    return res
+      .status(500)
+      .send(
+        errorResponse({
+          status: 500,
+          message: "failed to perform action",
+          details: "Some internal server error occured!",
+        })
+      );
   }
 }
 
 export async function find(req, res) {
   try {
-
     const query = req.query;
     const pagination = await getPagination(query.pagination);
     const collections = await Collection.findAndCountAll({
@@ -48,7 +64,12 @@ export async function find(req, res) {
       include: "thumbnail",
       attributes: {
         include: [
-          [sequelize.literal('(SELECT COUNT(*) FROM "CollectionProduct" WHERE "CollectionProduct"."CollectionId" = "Collection"."id")'), "products"],
+          [
+            sequelize.literal(
+              '(SELECT COUNT(*) FROM "CollectionProduct" WHERE "CollectionProduct"."CollectionId" = "Collection"."id")'
+            ),
+            "products",
+          ],
         ],
       },
     });
@@ -58,19 +79,29 @@ export async function find(req, res) {
     console.log(error);
     return res
       .status(500)
-      .send(errorResponse({ status: 500, message: "failed to perform action", details: "Some internal server error occured!" }));
+      .send(
+        errorResponse({
+          status: 500,
+          message: "failed to perform action",
+          details: "Some internal server error occured!",
+        })
+      );
   }
 }
 
 export async function findOne(req, res) {
   try {
-
     const id = req.params.id;
     const collection = await Collection.findByPk(id, {
-      include: ["thumbnail", { model: Product, as: "products", attributes: ["id", "name"] }],
+      include: [
+        "thumbnail",
+        { model: Product, as: "products", attributes: ["id", "name"] },
+      ],
     });
     if (!collection) {
-      return res.status(404).send(errorResponse({ message: "Invalid Collection ID" }));
+      return res
+        .status(404)
+        .send(errorResponse({ message: "Invalid Collection ID" }));
     }
 
     return res.status(200).send({ data: collection });
@@ -78,29 +109,41 @@ export async function findOne(req, res) {
     console.log(error);
     return res
       .status(500)
-      .send(errorResponse({ status: 500, message: error.message, details: "Some internal server error occured!" }));
+      .send(
+        errorResponse({
+          status: 500,
+          message: error.message,
+          details: "Some internal server error occured!",
+        })
+      );
   }
 }
 
 export async function update(req, res) {
   const t = await sequelize.transaction();
   try {
-
     const id = req.params.id;
-    const [updatedRowsCount, updatedCollection] = await Collection.update(req.body, {
-      where: { id: id },
-      returning: true,
-      transaction: t
-    });
+    const [updatedRowsCount, updatedCollection] = await Collection.update(
+      req.body,
+      {
+        where: { id: id },
+        returning: true,
+        transaction: t,
+      }
+    );
     if (updatedRowsCount === 0) {
-      return res.status(404).send(errorResponse({ message: "Invalid Collection ID" }));
+      return res
+        .status(404)
+        .send(errorResponse({ message: "Invalid Collection ID" }));
     }
     if (req.body.products && Array.isArray(req.body.products)) {
       const collectionProduct = await CollectionProduct.findAll({
         where: { CollectionId: id },
       });
 
-      const oldArray = collectionProduct.map((entry) => entry.dataValues.ProductId);
+      const oldArray = collectionProduct.map(
+        (entry) => entry.dataValues.ProductId
+      );
       const newArray = req.body.products;
 
       let newElements = [];
@@ -123,16 +166,19 @@ export async function update(req, res) {
         ProductId: item,
       }));
 
-      const destroyedCollection = await CollectionProduct.destroy({
-        where: {
-          ProductId: removedElements,
-        }
-      }, { transaction: t });
+      const destroyedCollection = await CollectionProduct.destroy(
+        {
+          where: {
+            ProductId: removedElements,
+          },
+        },
+        { transaction: t }
+      );
 
       await CollectionProduct.bulkCreate(addArray, { transaction: t });
     }
 
-    await t.commit()
+    await t.commit();
 
     return res.status(200).send({
       message: "Collection Updated Successfully!",
@@ -140,47 +186,68 @@ export async function update(req, res) {
     });
   } catch (error) {
     console.log(error);
-    await t.rollback()
+    await t.rollback();
     return res
       .status(500)
-      .send(errorResponse({ status: 500, message: "failed to perform action", details: "Some internal server error occured!" }));
+      .send(
+        errorResponse({
+          status: 500,
+          message: "failed to perform action",
+          details: "Some internal server error occured!",
+        })
+      );
   }
 }
 
 const _delete = async (req, res) => {
   try {
-
     const collectionId = req.params.id;
     const deletedRowCount = await Collection.destroy({
       where: { id: collectionId },
     });
     if (deletedRowCount === 0) {
-      return res.status(404).send(errorResponse({ message: "Collection Not Found!", details: "Collection id seems to be invalid" }));
+      return res
+        .status(404)
+        .send(
+          errorResponse({
+            message: "Collection Not Found!",
+            details: "Collection id seems to be invalid",
+          })
+        );
     }
 
-    const destroyedCollection = await sequelize.models.CollectionProduct.destroy({
-      where: {
-        CollectionId: collectionId,
-      },
-    });
+    const destroyedCollection =
+      await sequelize.models.CollectionProduct.destroy({
+        where: {
+          CollectionId: collectionId,
+        },
+      });
 
-    return res.status(200).send({ message: "Collection Deleted Successfully!" });
+    return res
+      .status(200)
+      .send({ message: "Collection Deleted Successfully!" });
   } catch (error) {
     console.log(error);
     return res
       .status(500)
-      .send(errorResponse({ status: 500, message: "failed to perform action", details: "Some internal server error occured!" }));
+      .send(
+        errorResponse({
+          status: 500,
+          message: "failed to perform action",
+          details: "Some internal server error occured!",
+        })
+      );
   }
 };
 export { _delete };
 
 export async function getProductsByCollection(req, res) {
   try {
-
     const { id } = req.params;
     const query = req.query;
     const minPrice = (query.price && parseFloat(query.price.min)) || 0;
-    const maxPrice = (query.price && parseFloat(query.price.max)) || Number.MAX_SAFE_INTEGER;
+    const maxPrice =
+      (query.price && parseFloat(query.price.max)) || Number.MAX_SAFE_INTEGER;
 
     const order = priceFilter(query, sequelize);
     const pagination = await getPagination(query.pagination);
@@ -188,7 +255,9 @@ export async function getProductsByCollection(req, res) {
       include: ["thumbnail"],
     });
     if (!collection) {
-      return res.status(404).send(errorResponse({ message: "Invalid Collection ID" }));
+      return res
+        .status(404)
+        .send(errorResponse({ message: "Invalid Collection ID" }));
     }
 
     const products = await Product.findAndCountAll({
@@ -196,9 +265,10 @@ export async function getProductsByCollection(req, res) {
       distinct: true,
       include: [
         {
-          model: Collection, as: "collections",
+          model: Collection,
+          as: "collections",
           where: { id: id },
-          attributes: []
+          attributes: [],
         },
         {
           model: Variant,
@@ -216,55 +286,79 @@ export async function getProductsByCollection(req, res) {
         "gallery",
         "thumbnail",
         "sub_category",
-        "category"
+        "category",
       ],
       limit: pagination.limit,
       offset: pagination.offset,
       where: {
-        is_active: true
+        is_active: true,
       },
       attributes: {
         include: [
-          [sequelize.literal('(SELECT ROUND(AVG("rating"), 2) FROM "Product_reviews" WHERE "Product_reviews"."ProductId" = "Product"."id")'), "rating"],
+          [
+            sequelize.literal(
+              '(SELECT ROUND(AVG("rating"), 2) FROM "Product_reviews" WHERE "Product_reviews"."ProductId" = "Product"."id")'
+            ),
+            "rating",
+          ],
         ],
       },
-    })
+    });
 
     const meta = await getMeta(pagination, products.count);
-    return res.status(200).send({ data: { collection, products: products.rows }, meta });
+    return res
+      .status(200)
+      .send({ data: { collection, products: products.rows }, meta });
   } catch (error) {
     console.log(error);
     return res
       .status(500)
-      .send(errorResponse({ status: 500, message: "failed to perform action", details: "Some internal server error occured!" }));
+      .send(
+        errorResponse({
+          status: 500,
+          message: "failed to perform action",
+          details: "Some internal server error occured!",
+        })
+      );
   }
 }
 
 export async function searchProductsInCollection(req, res) {
   try {
-
     const { id } = req.params;
     const query = req.query;
 
-    const collection = await Collection.findByPk(id)
+    const collection = await Collection.findByPk(id);
 
     const pagination = await getPagination(query.pagination);
     const qs = query.qs.trim();
 
     const products = await Product.findAndCountAll({
       where: {
-        [Op.or]: [{ name: { [Op.iLike]: `%${qs}%` } }, { description: { [Op.iLike]: `%${qs}%` } }],
+        [Op.or]: [
+          { name: { [Op.iLike]: `%${qs}%` } },
+          { description: { [Op.iLike]: `%${qs}%` } },
+        ],
       },
       offset: pagination.offset,
       limit: pagination.limit,
-      include: ["thumbnail", {
-        model: Collection, as: "collections",
-        where: { id: id },
-        attributes: []
-      }],
+      include: [
+        "thumbnail",
+        {
+          model: Collection,
+          as: "collections",
+          where: { id: id },
+          attributes: [],
+        },
+      ],
       attributes: {
         include: [
-          [sequelize.literal('(SELECT ROUND(AVG("rating"), 2) FROM "Product_reviews" WHERE "Product_reviews"."ProductId" = "Product"."id")'), "rating"],
+          [
+            sequelize.literal(
+              '(SELECT ROUND(AVG("rating"), 2) FROM "Product_reviews" WHERE "Product_reviews"."ProductId" = "Product"."id")'
+            ),
+            "rating",
+          ],
         ],
       },
     });
@@ -282,4 +376,3 @@ export async function searchProductsInCollection(req, res) {
     );
   }
 }
-
