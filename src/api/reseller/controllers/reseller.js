@@ -533,3 +533,29 @@ export async function fetchResellerCustomerOrders(req, res) {
     return res.status(500).send({ error: "Failed to fetch orders" });
   }
 }
+
+export async function fetchResellerCustomers(req, res) {
+  try {
+    const orders = await Order.findAll({
+      where: { ResellerId: res.user },
+      include: [{ model: User, as: "user" }],
+    });
+
+    const users = orders
+      .map((o) => o.user)
+      .reduce(
+        (acc, user) => {
+          if (!acc.set.has(user.id)) {
+            acc.set.add(user.id);
+            acc.users.push(user);
+          }
+          return acc;
+        },
+        { set: new Set(), users: [] }
+      ).users;
+    return res.status(200).send(users);
+  } catch (err) {
+    console.log(err.message);
+    return res.status(400).send(err.message);
+  }
+}
