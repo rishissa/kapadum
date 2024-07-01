@@ -1,7 +1,32 @@
 import { Router } from "express";
 const router = Router();
-import { forgetPassword as _forgetPassword, resetPassword as _resetPassword, create, update, find, getMe, search, dashboard, findOne, _delete, login, register_FCM, sendLoginOTP, verifyLoginOTP } from "../controllers/user.js";
-import { createUser, updateUser, FCM_registration, validatelogin, forgetPassword, resetPassword, validateSendloginOTP, validateVerifyloginOTP } from "../middlewares/user.js";
+import {
+  forgetPassword as _forgetPassword,
+  resetPassword as _resetPassword,
+  create,
+  update,
+  find,
+  getMe,
+  search,
+  dashboard,
+  findOne,
+  _delete,
+  login,
+  register_FCM,
+  sendLoginOTP,
+  verifyLoginOTP,
+  fetchUserAddresses,
+} from "../controllers/user.js";
+import {
+  createUser,
+  updateUser,
+  FCM_registration,
+  validatelogin,
+  forgetPassword,
+  resetPassword,
+  validateSendloginOTP,
+  validateVerifyloginOTP,
+} from "../middlewares/user.js";
 import RBCA from "../../../middlewares/RBAC.js";
 
 const permissions = [
@@ -71,6 +96,12 @@ const permissions = [
     method: "POST",
     handler: "Register FCM",
   },
+  {
+    api: "users",
+    endpoint: "/api/users/:id/address",
+    method: "GET",
+    handler: "Get User Addresess",
+  },
 ];
 
 export default (app) => {
@@ -88,6 +119,7 @@ export default (app) => {
   router.post("/send-otp", [validateSendloginOTP], sendLoginOTP);
   router.post("/verify-otp", [validateVerifyloginOTP], verifyLoginOTP);
   router.post("/fcm/register", [FCM_registration], register_FCM);
+  router.post("/:id/address", fetchUserAddresses);
   app.use("/api/users", router);
 };
 

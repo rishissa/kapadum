@@ -1,6 +1,14 @@
 import { Router } from "express";
 const router = Router();
-import { create, userAddress, search, find, findOne, update, _delete } from "../controllers/address.js";
+import {
+  create,
+  userAddress,
+  search,
+  find,
+  findOne,
+  update,
+  _delete,
+} from "../controllers/address.js";
 import { addAddress, updateAddress } from "../middlewares/address.js";
 
 const permissions = [

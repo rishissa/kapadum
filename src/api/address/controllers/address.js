@@ -1,7 +1,7 @@
 import { errorResponse, tokenError } from "../../../services/errorResponse.js";
 import { verify } from "../../../services/jwt.js";
 import { getPagination, getMeta } from "../../../services/pagination.js";
-import Address from './../models/address.js';
+import Address from "./../models/address.js";
 
 export async function create(req, res) {
   try {
@@ -9,9 +9,11 @@ export async function create(req, res) {
     console.log(token);
     const address = await Address.create({
       ...req.body,
-      UserId: token.id
+      UserId: token.id,
     });
-    return res.status(200).send({ message: "Address Created Successfully!", data: address });
+    return res
+      .status(200)
+      .send({ message: "Address Created Successfully!", data: address });
   } catch (error) {
     console.log(error);
     return res.status(500).send(
@@ -28,11 +30,11 @@ export async function find(req, res) {
     const query = req.query;
     const whereCluase = {};
     if (req.headers.authorization) {
-      const token = verify(req)
+      const token = verify(req);
       if (token.error) {
-        return res.status(402).send(tokenError(token))
+        return res.status(402).send(tokenError(token));
       }
-      whereCluase.UserId = token.id
+      whereCluase.UserId = token.id;
     }
     const pagination = await getPagination(query.pagination);
     const addresses = await Address.findAndCountAll({
@@ -139,7 +141,9 @@ export async function userAddress(req, res) {
     return res.status(200).send({ data: address });
   } catch (error) {
     console.log(error);
-    return res.status(500).send(errorResponse({ status: 500, message: "Internal Server Error" }));
+    return res
+      .status(500)
+      .send(errorResponse({ status: 500, message: "Internal Server Error" }));
   }
 }
 
@@ -154,7 +158,10 @@ export async function search(req, res) {
       limit: pagination.limit,
       order: orderBy(query),
       where: {
-        [Op.or]: [{ name: { [Op.iLike]: `%${qs}%` } }, { phone: { [Op.iLike]: `%${qs}%` } }],
+        [Op.or]: [
+          { name: { [Op.iLike]: `%${qs}%` } },
+          { phone: { [Op.iLike]: `%${qs}%` } },
+        ],
       },
     });
 
@@ -162,6 +169,8 @@ export async function search(req, res) {
     return res.status(200).send({ data: address.rows, meta });
   } catch (error) {
     console.log(error);
-    return res.status(500).send(errorResponse({ status: 500, message: "Internal server Error" }));
+    return res
+      .status(500)
+      .send(errorResponse({ status: 500, message: "Internal server Error" }));
   }
 }

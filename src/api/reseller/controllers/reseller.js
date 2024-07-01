@@ -7,7 +7,6 @@ import Role from "../../role/models/role.js";
 import User from "../../user/models/user.js";
 import ResellerInfo from "../models/reseller.js";
 import AccountDetails from "../models/reseller.js";
-import Address from "../models/reseller.js";
 import { hash } from "../../../services/bcrypt.js";
 import ResellerBanner from "../../reseller_banner/models/reseller_banner.js";
 import Media from "../../upload/models/media.js";
@@ -22,6 +21,7 @@ import Order from "../../order/models/order.js";
 import Product from "../../product/models/product.js";
 import StoreGlobal from "../../store_global/models/store_global.js";
 import { order_status as _order_status } from "../../../constants/order.js";
+import Address from "../../address/models/address.js";
 
 export async function create(req, res) {
   const t = await sequelize.transaction();
@@ -538,7 +538,13 @@ export async function fetchResellerCustomers(req, res) {
   try {
     const orders = await Order.findAll({
       where: { ResellerId: res.user },
-      include: [{ model: User, as: "user" }],
+      include: [
+        {
+          model: User,
+          as: "user",
+          include: [{ model: Address, as: "addresses" }],
+        },
+      ],
     });
 
     const users = orders

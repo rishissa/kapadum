@@ -29,6 +29,7 @@ import Product_metric from "../../product_metrics/models/product_metrics.js";
 import Variant from "./../../variant/models/variant.js";
 import role from "../../../constants/role.js";
 import ResellerInfo from "../../reseller/models/reseller.js";
+import Address from "../../address/models/address.js";
 
 export async function create(req, res) {
   try {
@@ -639,5 +640,17 @@ export async function verifyLoginOTP(req, res) {
     return res
       .status(500)
       .send(errorResponse({ status: 500, message: error.message }));
+  }
+}
+
+export async function fetchUserAddresses(req, res) {
+  try {
+    const id = req.params.id;
+    const addresses = await Address.findAll({ where: { UserId: id } });
+
+    return res.status(200).send(addresses);
+  } catch (err) {
+    console.log(err.message);
+    return res.status(400).send(err.message);
   }
 }
