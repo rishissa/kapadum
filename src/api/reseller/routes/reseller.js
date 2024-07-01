@@ -157,6 +157,7 @@ export default (app) => {
   router.post("/orders", [RBAC], resellerOrder);
   router.put("/:id", [RBAC, updateUser], update);
   router.get("/", [RBAC], find);
+  router.get("/customer-orders", [RBAC], fetchResellerCustomerOrders);
   router.get("/:id", [RBAC], findOne);
   router.delete("/:id", [RBAC], _delete);
   router.get("/:id/banners", fetchResellerBanners);
@@ -164,7 +165,6 @@ export default (app) => {
   router.get("/:id/products", fetchResellerProducts);
   router.get("/search/:key", [RBAC], searchResellers);
   router.get("/redirect", redirectToAppReseller);
-  router.get("/customer-orders", fetchResellerCustomerOrders);
 
   //   router.post("/login", [validatelogin], login);
   app.use("/api/resellers", router);

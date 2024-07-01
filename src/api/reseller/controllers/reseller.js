@@ -21,6 +21,7 @@ import Order_variant from "../../order_variant/models/order_variant.js";
 import Order from "../../order/models/order.js";
 import Product from "../../product/models/product.js";
 import StoreGlobal from "../../store_global/models/store_global.js";
+import { order_status as _order_status } from "../../../constants/order.js";
 
 export async function create(req, res) {
   const t = await sequelize.transaction();

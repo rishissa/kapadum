@@ -53,6 +53,7 @@ import Address from "../../address/models/address.js";
 import Product from "../../product/models/product.js";
 import Media from "../../upload/models/media.js";
 import ImportedProduct from "../../product/models/imported_product.js";
+import { createResellerOrderVaraint } from "../services/createResellerOV.js";
 const RZ_RCT = uid(10).toUpperCase();
 
 export async function create(req, res) {
@@ -1306,8 +1307,19 @@ export async function placeCustomerOrderToReseller(req, res) {
     const body = req.body;
     const variants = body.variants;
     const user = req.user;
+
     const variants_details = req.variants_arr;
     const t = await sequelize.transaction();
+    let reseller;
+    if (
+      res.user_data.role.name == "Admin" ||
+      res.user_data.role.name == "Super_Admin"
+    ) {
+      user = req.body.user;
+      reseller = req.user;
+    } else {
+      reseller = req.body.reseller;
+    }
     let { totalAmount, variantsPrice } = await checkBulkPricing({
       user,
       variants,
@@ -1327,7 +1339,7 @@ export async function placeCustomerOrderToReseller(req, res) {
       });
     }
     body.consumer.isResellerOrder = false;
-    const order_id = await createOrderVaraint({
+    const order_id = await createResellerOrderVaraint({
       body,
       // razorpayOrder: rzOrder,
       // sequelize,
@@ -1336,6 +1348,7 @@ export async function placeCustomerOrderToReseller(req, res) {
       // variants_details,
       variantsPrice,
       totalAmount,
+      ResellerId: reseller,
     });
 
     //upadte quantity in imported products of reseller
